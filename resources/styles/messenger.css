@@ -1,0 +1,27 @@
+.h-100 {
+    height: 100%;
+}
+
+.h-80 {
+    height: 80%;
+}
+
+.h-90 {
+    height: 90%;
+}
+
+.panel-footer {
+    position: absolute;
+    bottom: 0;
+    right: 15px;
+    left: 15px;
+}
+
+.panel-body {
+    overflow-y: auto;
+    position: absolute;
+    bottom: 55px;
+    top: 45px;
+    right: 0px;
+    left: 15px;
+}
