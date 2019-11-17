@@ -26,6 +26,13 @@ interface DAOFacade : Closeable {
 }
 
 class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")): DAOFacade {
+    constructor(dir: File) : this(
+        Database.connect(
+            "jdbc:h2:file:${dir.canonicalFile.absolutePath}",
+            driver = "org.h2.Driver"
+        )
+    )
+
     override fun createRelationship(relationship: Relationship) = transaction(db) {
         Relationships.insert {
             it[id] = relationship.relationshipId
@@ -93,13 +100,6 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         list
     }
 
-    constructor(dir: File) : this(
-        Database.connect(
-            "jdbc:h2:file:${dir.canonicalFile.absolutePath}",
-            driver = "org.h2.Driver"
-        )
-    )
-
     override fun init() = transaction(db){
         SchemaUtils.create(Users)
         SchemaUtils.create(Relationships)
@@ -134,8 +134,5 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
 
     override fun close() {
     }
-
-
-
 
 }

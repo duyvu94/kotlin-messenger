@@ -9,9 +9,9 @@
     <title>${title} | PriChat</title>
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
+    <link rel="stylesheet" type="text/css" href="/styles/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/messenger.css">
-    <link rel="stylesheet" type="text/css" href="/styles/bootstrap.css">
 </head>
 <body>
     <div class="sidebar pure-u-1 pure-u-md-1-4">
