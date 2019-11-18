@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css" href="/styles/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/messenger.css">
+
 </head>
 <body>
     <div class="sidebar pure-u-1 pure-u-md-1-4">
@@ -39,6 +40,11 @@
     <div class="content pure-u-1 pure-u-md-3-4">
         <#nested />
     </div>
+
+    <#if user??>
+        <script src="/styles/main.js"></script>
+    </#if>
+
     <div class="footer">
         Vu Phuong Duy, ${.now?string("yyyy")}
     </div>

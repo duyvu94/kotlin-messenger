@@ -88,7 +88,7 @@
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Enter Email" />
                     <span class="input-group-btn">
-                        <button class="btn pure-button-primary" type="button">ADD</button>
+                        <button class="btn pure-button-primary" id="add-friend-btn" type="button">ADD</button>
                     </span>
                 </div>
             </div>

@@ -8,7 +8,6 @@ import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
 import io.ktor.routing.*
-import io.ktor.http.*
 import freemarker.cache.*
 import io.ktor.freemarker.*
 import io.ktor.features.CallLogging
@@ -19,16 +18,23 @@ import io.ktor.http.content.*
 import io.ktor.locations.Location
 import io.ktor.locations.Locations
 import io.ktor.locations.locations
-import io.ktor.sessions.SessionTransportTransformerMessageAuthentication
-import io.ktor.sessions.Sessions
-import io.ktor.sessions.cookie
 import io.ktor.util.hex
+import io.ktor.websocket.WebSockets
+import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason
+import io.ktor.http.cio.websocket.Frame
+import io.ktor.sessions.*
+import io.ktor.util.generateNonce
+import io.ktor.websocket.webSocket
+import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.exposed.sql.Database
 import java.io.File
-import java.net.URI
 import java.sql.Driver
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import java.time.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -64,23 +70,50 @@ fun Application.module(testing: Boolean = false) {
         templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
     }
 
+    install(WebSockets) {
+        pingPeriod = Duration.ofMinutes(1)
+    }
+
     install(Sessions) {
         cookie<ApplicationSession>("SESSION") {
             transform(SessionTransportTransformerMessageAuthentication(hashKey))
         }
     }
-
+    /*
+    intercept(ApplicationCallPipeline.Features) {
+        call.sessions.get<ApplicationSession>()?.let {
+            call.sessions.set(ApplicationSession(generateNonce()))
+        }
+    }
+*/
     val hashFunction = { s: String -> hash(s) }
 
     //register routes
     routing {
-
         welcome()
         login(dao, hashFunction)
         register(dao, hashFunction)
         messenger(dao)
 
-        // Static feature. Try to access `/static/ktor_logo.svg`
+        webSocket("/ws") {
+            val session = call.sessions.get<ApplicationSession>()
+
+            if (session == null) {
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
+                return@webSocket
+            }
+
+            incoming.consumeEach { frame ->
+
+                if (frame is Frame.Text) {
+
+                    val jsonData = json.parse(SocketData.serializer(), frame.readText())
+                    server.command(session.userId, jsonData)
+                }
+            }
+
+        }
+
         static("/styles") {
             resources("styles")
         }
@@ -92,6 +125,13 @@ val hashKey = hex("6819b57a326945c1968f45236589")
 val dir = File("build/db")
 
 val hmacKey = SecretKeySpec(hashKey, "HmacSHA1")
+
+val json = Json(JsonConfiguration.Stable)
+
+@Serializable
+data class SocketData(val command:String?, val message: String?)
+
+val server = ChatServer()
 
 val pool = ComboPooledDataSource().apply {
     driverClass = Driver::class.java.name
