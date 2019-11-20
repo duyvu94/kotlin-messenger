@@ -1,6 +1,6 @@
 package com.duyvu
 
-import com.duyvu.model.DAOFacade
+import com.duyvu.dao.DAOFacade
 import io.ktor.application.*
 import io.ktor.freemarker.*
 import io.ktor.http.*

@@ -62,7 +62,7 @@
             </div>
             <div class="panel-body">
                 <ul class="media-list">
-                    <#list 1..5 as x>
+                    <#list 1..0 as x>
                         <li class="media">
                             <h5>Alex Deo | User </h5>
                         </li>
@@ -76,8 +76,8 @@
                SENT REQUEST(S)
             </div>
             <div class="panel-body">
-                <ul class="media-list">
-                    <#list 1..5 as x>
+                <ul id="friend-request-list" class="media-list">
+                    <#list 1..0 as x>
                         <li class="media">
                             <h5>Alex Deo | User </h5>
                         </li>
@@ -86,7 +86,7 @@
             </div>
             <div class="panel-footer">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Enter Email" />
+                    <input id="add-friend-email" type="text" class="form-control" placeholder="Enter Email" />
                     <span class="input-group-btn">
                         <button class="btn pure-button-primary" id="add-friend-btn" type="button">ADD</button>
                     </span>

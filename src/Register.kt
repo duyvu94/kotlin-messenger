@@ -1,7 +1,7 @@
 package com.duyvu
 
 
-import com.duyvu.model.DAOFacade
+import com.duyvu.dao.DAOFacade
 import com.duyvu.model.User
 import io.ktor.application.*
 import io.ktor.freemarker.*

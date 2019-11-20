@@ -1,6 +1,8 @@
-package com.duyvu.model
+package com.duyvu.dao
 
+import com.duyvu.model.User
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.*
 
@@ -19,7 +21,7 @@ interface DAOFacade : Closeable {
 
     fun friendList(userId: String): List<User>
 
-    fun createRelationship(relationship: Relationship)
+    fun createRelationship(fromId: String, email: String): Boolean
 
     fun confirmRelationship(fromUserId: String, toUserId: String)
 
@@ -33,20 +35,32 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         )
     )
 
-    override fun createRelationship(relationship: Relationship) = transaction(db) {
-        Relationships.insert {
-            it[id] = relationship.relationshipId
-            it[fromUserId] = relationship.fromUserId
-            it[toUserId] = relationship.toUserId
-            it[isConfirmed] = true
+    override fun createRelationship(fromId: String, email: String): Boolean = transaction(db) {
+        val toId = Users.select( Users.email.eq(email))
+            .map { User(it[Users.id], email, it[Users.displayName], it[Users.passwordHash]) }.singleOrNull()?.userId;
+
+        val relationship = if (toId != null) Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.fromUserId.eq(toId)) else null
+        when  {
+            relationship == null -> false
+            relationship.fetchSize == null-> false
+            relationship.fetchSize == 0 -> false
+            toId != null -> {
+                Relationships.insert {
+                    it[fromUserId] = fromId
+                    it[toUserId] = toId
+                    it[isConfirmed] = true
+                }
+                Relationships.insert {
+                    it[fromUserId] = toId
+                    it[toUserId] = fromId
+                    it[isConfirmed] = false
+                }
+                true
+            }
+            else -> false
         }
-        Relationships.insert {
-            it[id] = relationship.relationshipId
-            it[fromUserId] = relationship.toUserId
-            it[toUserId] = relationship.fromUserId
-            it[isConfirmed] = false
-        }
-        Unit
+
+
     }
 
     override fun confirmRelationship(fromUserId: String, toUserId: String) {

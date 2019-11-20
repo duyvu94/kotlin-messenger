@@ -43,7 +43,8 @@ function connect() {
 
     // If we receive a message from the server, we want to handle it.
     socket.onmessage = function(event) {
-        received(event.data.toString());
+        console.log(event.data);
+        //received(event.data.toString());
     };
 }
 
@@ -97,6 +98,20 @@ function onSend() {
     }
 }
 
+function onSendFriendRequest() {
+    var input = document.getElementById("add-friend-email");
+
+    if (input) {
+        var email = input.value;
+        if (text && socket) {
+            // Sends the text
+            socket.send("{command : 'client-add-friend', message : '"+ email +"'}");
+            // Clears the input so the user can type a new command or text to say
+            input.value = "";
+        }
+    }
+}
+
 /**
  * The initial code to be executed once the page has been loaded and is ready.
  */
@@ -105,13 +120,13 @@ function start() {
     connect();
 
     // If we click the sendButton, let's send the message.
-    document.getElementById("add-friend-btn").onclick = onSend;
+    document.getElementById("add-friend-btn").onclick = onSendFriendRequest;
     // If we pressed the 'enter' key being inside the 'commandInput', send the message to improve accessibility and making it nicer.
-    document.getElementById("commandInput").onkeydown = function(e) {
+    /* document.getElementById("commandInput").onkeydown = function(e) {
         if (e.keyCode == 13) {
             onSend();
         }
-    };
+    }; */
 }
 
 /**

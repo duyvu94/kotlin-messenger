@@ -1,5 +1,6 @@
 package com.duyvu
 
+import com.duyvu.dao.DAOFacade
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
@@ -12,21 +13,35 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ChatServer {
 
-    suspend fun memberJoin(member: String, socket: WebSocketSession) {
+    private val onLineUsers = ConcurrentHashMap<String, MutableList<WebSocketSession>>()
 
+    suspend fun userOnline(userId: String, socket: WebSocketSession) {
+        val list = onLineUsers.computeIfAbsent(userId) { CopyOnWriteArrayList<WebSocketSession>() }
+        list.add(socket)
     }
 
 
-    suspend fun memberLeft(member: String, socket: WebSocketSession) {
-
+    suspend fun userOffline(userId: String, socket: WebSocketSession) {
+        val connections = onLineUsers[userId]
+        connections?.remove(socket)
     }
 
     suspend fun sendTo(recipient: String, sender: String, message: String) {
 
     }
 
-    suspend fun command(sender: String, data: SocketData) {
+    suspend fun command(sender: String, data: SocketData, dao: DAOFacade) {
         println(data.command + " " + data.message);
+        when (data.command) {
+            "client-add-friend" -> addFriend(sender, data.message, dao)
+        }
+    }
+
+    private suspend fun addFriend(fromUserId: String, email : String?, dao: DAOFacade) {
+        if (email != null && dao.createRelationship(fromUserId, email))
+            onLineUsers[fromUserId]?.send(Frame.Text("{'command': 'server-add-friend' , message = '$email'}"));
+        else
+            onLineUsers[fromUserId]?.send(Frame.Text("{'command': 'server-add-friend' , message = 'failure'}"));
     }
 
     private suspend fun broadcast(message: String) {
@@ -37,7 +52,16 @@ class ChatServer {
 
     }
 
-    suspend fun List<WebSocketSession>.send(frame: Frame) {
-
+    private suspend fun List<WebSocketSession>.send(frame: Frame) {
+        forEach {
+            try {
+                it.send(frame.copy())
+            } catch (t: Throwable) {
+                try {
+                    it.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, ""))
+                } catch (ignore: ClosedSendChannelException) {
+                }
+            }
+        }
     }
 }

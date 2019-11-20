@@ -1,4 +1,4 @@
-package com.duyvu.model
+package com.duyvu.dao
 
 import org.jetbrains.exposed.sql.*
 

@@ -1,8 +1,8 @@
 package com.duyvu
 
 
-import com.duyvu.model.DAOFacade
-import com.duyvu.model.DAOFacadeDatabase
+import com.duyvu.dao.DAOFacade
+import com.duyvu.dao.DAOFacadeDatabase
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import io.ktor.application.*
 import io.ktor.response.*
@@ -24,7 +24,6 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.sessions.*
-import io.ktor.util.generateNonce
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.exposed.sql.Database
@@ -79,13 +78,7 @@ fun Application.module(testing: Boolean = false) {
             transform(SessionTransportTransformerMessageAuthentication(hashKey))
         }
     }
-    /*
-    intercept(ApplicationCallPipeline.Features) {
-        call.sessions.get<ApplicationSession>()?.let {
-            call.sessions.set(ApplicationSession(generateNonce()))
-        }
-    }
-*/
+
     val hashFunction = { s: String -> hash(s) }
 
     //register routes
@@ -103,13 +96,19 @@ fun Application.module(testing: Boolean = false) {
                 return@webSocket
             }
 
-            incoming.consumeEach { frame ->
+            server.userOnline(session.userId, this)
 
-                if (frame is Frame.Text) {
+            try {
+                incoming.consumeEach { frame ->
 
-                    val jsonData = json.parse(SocketData.serializer(), frame.readText())
-                    server.command(session.userId, jsonData)
+                    if (frame is Frame.Text) {
+
+                        val jsonData = json.parse(SocketData.serializer(), frame.readText())
+                        server.command(session.userId, jsonData, dao)
+                    }
                 }
+            } finally {
+                server.userOffline(session.userId, this)
             }
 
         }
