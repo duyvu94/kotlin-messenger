@@ -8,7 +8,7 @@
             <div class="panel-heading">
                 RECENT CHAT HISTORY
             </div>
-            <div class="panel-body chat-content">
+            <div class="panel-body chat-content" id= "chat-message-list">
                 <ul class="media-list">
                     <#list 1..10 as x>
                         <li class="media message my-message">
@@ -77,9 +77,9 @@
             </div>
             <div class="panel-body">
                 <ul id="friend-request-list" class="media-list">
-                    <#list 1..0 as x>
-                        <li class="media">
-                            <h5>Alex Deo | User </h5>
+                    <#list friendRequestSentList as friendRequest>
+                        <li>
+                            ${friendRequest.email}
                         </li>
                     </#list>
                 </ul>

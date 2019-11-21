@@ -18,9 +18,15 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
         <div class="page-title pure-u-1">
             <h2>${title}</h2>
+            <#if user??>
+                <h4>${user.email}</h4>
+            </#if>
         </div>
         <div class="header">
             <div class="brand-title">PriChat</div>
+            <#if user??>
+
+            </#if>
             <nav class="nav">
                 <ul class="nav-list">
                     <li class="nav-item"><a class="pure-button" href="/">homepage</a></li>
@@ -34,6 +40,7 @@
                     </#if>
                 </ul>
             </nav>
+
         </div>
     </div>
 

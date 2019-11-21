@@ -38,10 +38,10 @@ class ChatServer {
     }
 
     private suspend fun addFriend(fromUserId: String, email : String?, dao: DAOFacade) {
-        if (email != null && dao.createRelationship(fromUserId, email))
-            onLineUsers[fromUserId]?.send(Frame.Text("{'command': 'server-add-friend' , message = '$email'}"));
+        if (email != null && fromUserId != dao.userByEmail(email)?.userId && dao.createRelationship(fromUserId, email))
+            onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\"}"));
         else
-            onLineUsers[fromUserId]?.send(Frame.Text("{'command': 'server-add-friend' , message = 'failure'}"));
+            onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"failure\"}"));
     }
 
     private suspend fun broadcast(message: String) {

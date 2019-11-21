@@ -5,29 +5,21 @@ var socket = null;
  * This function is in charge of connecting the client.
  */
 function connect() {
-    // First we create the socket.
-    // The socket will be connected automatically asap. Not now but after returning to the event loop,
-    // so we can register handlers safely before the connection is performed.
+
     console.log("Begin connect");
     socket = new WebSocket("ws://" + window.location.host + "/ws");
 
-    // We set a handler that will be executed if the socket has any kind of unexpected error.
-    // Since this is a just sample, we only report it at the console instead of making more complex things.
+
     socket.onerror = function() {
         console.log("socket error");
     };
 
-    // We set a handler upon connection.
-    // What this does is to put a text in the messages container notifying about this event.
+
     socket.onopen = function() {
         write("Connected");
     };
 
-    // If the connection was closed gracefully (either normally or with a reason from the server),
-    // we have this handler to notify to the user via the messages container.
-    // Also we will retry a connection after 5 seconds.
     socket.onclose = function(evt) {
-        // Try to gather an explanation about why this was closed.
         var explanation = "";
         if (evt.reason && evt.reason.length > 0) {
             explanation = "reason: " + evt.reason;
@@ -35,16 +27,32 @@ function connect() {
             explanation = "without a reason specified" ;
         }
 
-        // Notify the user using the messages container.
         write("Disconnected with close code " + evt.code + " and " + explanation);
-        // Try to reconnect after 5 seconds.
         setTimeout(connect, 5000);
     };
 
     // If we receive a message from the server, we want to handle it.
     socket.onmessage = function(event) {
         console.log(event.data);
-        //received(event.data.toString());
+        let responseData = JSON.parse(event.data)
+
+        let friendRequestList = document.getElementById("friend-request-list");
+
+        if (responseData != null ){
+            switch (responseData.command){
+                case "server-add-friend":
+                    if (responseData == "failure")
+                        break;
+                    let li = document.createElement("li");
+                    li.className = "media";
+                    li.appendChild(document.createTextNode(responseData.message));
+                    friendRequestList.appendChild(li);
+                    break;
+            }
+
+
+        }
+
     };
 }
 
@@ -74,9 +82,9 @@ function write(message) {
     // Then we get the 'messages' container that should be available in the HTML itself already.
     var messagesDiv = document.getElementById("messages");
     // We adds the text
-    messagesDiv.appendChild(line);
+    //messagesDiv.appendChild(line);
     // We scroll the container to where this text is so the use can see it on long conversations if he/she has scrolled up.
-    messagesDiv.scrollTop = line.offsetTop;
+    //messagesDiv.scrollTop = line.offsetTop;
 }
 
 /**
@@ -103,10 +111,8 @@ function onSendFriendRequest() {
 
     if (input) {
         var email = input.value;
-        if (text && socket) {
-            // Sends the text
-            socket.send("{command : 'client-add-friend', message : '"+ email +"'}");
-            // Clears the input so the user can type a new command or text to say
+        if (email && socket) {
+            socket.send('{command : "client-add-friend", message : "'+ email +'"}');
             input.value = "";
         }
     }
@@ -121,6 +127,10 @@ function start() {
 
     // If we click the sendButton, let's send the message.
     document.getElementById("add-friend-btn").onclick = onSendFriendRequest;
+
+
+    var chatList = document.getElementById("chat-message-list");
+    chatList.scrollTop = chatList.scrollHeight;
     // If we pressed the 'enter' key being inside the 'commandInput', send the message to improve accessibility and making it nicer.
     /* document.getElementById("commandInput").onkeydown = function(e) {
         if (e.keyCode == 13) {

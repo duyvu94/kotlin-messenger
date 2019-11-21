@@ -39,11 +39,11 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         val toId = Users.select( Users.email.eq(email))
             .map { User(it[Users.id], email, it[Users.displayName], it[Users.passwordHash]) }.singleOrNull()?.userId;
 
+        println(toId);
+
         val relationship = if (toId != null) Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.fromUserId.eq(toId)) else null
         when  {
-            relationship == null -> false
-            relationship.fetchSize == null-> false
-            relationship.fetchSize == 0 -> false
+            relationship?.fetchSize != null -> false
             toId != null -> {
                 Relationships.insert {
                     it[fromUserId] = fromId
@@ -116,6 +116,7 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
 
     override fun init() = transaction(db){
         SchemaUtils.create(Users)
+        SchemaUtils.drop(Relationships)
         SchemaUtils.create(Relationships)
     }
 
@@ -148,5 +149,6 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
 
     override fun close() {
     }
+
 
 }
