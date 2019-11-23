@@ -34,6 +34,7 @@ class SocketServer {
         println(data.command + " " + data.message);
         when (data.command) {
             "client-add-friend" -> addFriend(sender, data.message, dao)
+            "client-accept-friend" -> acceptFriend(sender, data.message, dao)
         }
     }
 
@@ -42,13 +43,27 @@ class SocketServer {
             val toUserId = dao.userByEmail(email)?.userId
             val userEmail = dao.user(fromUserId)?.email
 
-            if (fromUserId != toUserId && dao.createRelationship(fromUserId, email)){
+            if (toUserId != null && fromUserId != toUserId && dao.createRelationship(fromUserId, toUserId)){
                 onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\"}"));
                 onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-friend-request\" , \"message\" : \"$userEmail\"}"));
             }
         }
         else
             onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"failure\"}"));
+    }
+
+    private suspend fun acceptFriend(fromUserId: String, email : String?, dao: DAOFacade) {
+        if (email != null){
+            val toUserId = dao.userByEmail(email)?.userId
+            val userEmail = dao.user(fromUserId)?.email
+
+            if (toUserId != null && fromUserId != toUserId && dao.confirmRelationship(fromUserId, toUserId)){
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-accept-friend\" , \"message\" : \"$email\"}"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-accept-request\" , \"message\" : \"$userEmail\"}"));
+            }
+        }
+        else
+            onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-accept-friend\" , \"message\" : \"failure\"}"));
     }
 
     private suspend fun broadcast(message: String) {

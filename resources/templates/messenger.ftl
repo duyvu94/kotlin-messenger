@@ -46,12 +46,12 @@
                FRIEND LIST
             </div>
             <div class="panel-body">
-                <ul class="media-list">
-                    <#list 1..5 as x>
-                        <li class="media">
-                            <h5>Alex Deo | User </h5>
-                        </li>
-                    </#list>
+                <ul id="friend-list" class="media-list">
+                   <#list friendList as friend>
+                       <li class="media">
+                           <a id="chat-friend-btn" data-id="${friend.email}">${friend.email}</a>
+                       </li>
+                   </#list>
                 </ul>
             </div>
         </div>
@@ -63,8 +63,9 @@
             <div class="panel-body">
                 <ul id="friend-request-waiting-list" class="media-list">
                     <#list friendRequestWaitingList as friendRequest>
-                        <li>
-                            ${friendRequest.email}
+                        <li class="media">
+                            <h5>${friendRequest.email}</h5>
+                            <button class="btn pure-button-primary accept-friend-btn" data-id="${friendRequest.email}" type="button">Accept</button>
                         </li>
                     </#list>
                 </ul>
@@ -78,8 +79,8 @@
             <div class="panel-body">
                 <ul id="friend-request-sent-list" class="media-list">
                     <#list friendRequestSentList as friendRequest>
-                        <li>
-                            ${friendRequest.email}
+                        <li class="media">
+                            <h5>${friendRequest.email}</h5>
                         </li>
                     </#list>
                 </ul>

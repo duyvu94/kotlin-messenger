@@ -19,8 +19,11 @@ fun Route.messenger(dao: DAOFacade) {
 
         val friendRequestSentList = dao.friendRequestSentList(user.userId)
         val friendRequestWaitingList = dao.friendRequestWaitingList(user.userId)
+        val friendList = dao.friendList(user.userId)
 
         call.respond(FreeMarkerContent("messenger.ftl",
-            mapOf("user" to user, "friendRequestSentList" to friendRequestSentList, "friendRequestWaitingList" to friendRequestWaitingList )))
+            mapOf("user" to user, "friendRequestSentList" to friendRequestSentList,
+                "friendRequestWaitingList" to friendRequestWaitingList,
+                "friendList" to friendList)))
     }
 }

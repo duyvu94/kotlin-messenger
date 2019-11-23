@@ -21,6 +21,14 @@ h3 {
     font-weight: 100;
 }
 
+h5 {
+    display:inline-block;
+}
+
+.accept-friend-btn {
+    float : right;
+}
+
 /* LAYOUT CSS */
 .pure-img-responsive {
     max-width: 100%;

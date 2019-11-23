@@ -21,9 +21,9 @@ interface DAOFacade : Closeable {
 
     fun friendList(userId: String): List<User>
 
-    fun createRelationship(fromId: String, email: String): Boolean
+    fun createRelationship(fromId: String, toId: String): Boolean
 
-    fun confirmRelationship(fromUserId: String, toUserId: String)
+    fun confirmRelationship(fromUserId: String, toUserId: String): Boolean
 
 }
 
@@ -35,15 +35,13 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         )
     )
 
-    override fun createRelationship(fromId: String, email: String): Boolean = transaction(db) {
-        val toId = Users.select( Users.email.eq(email))
-            .map { User(it[Users.id], email, it[Users.displayName], it[Users.passwordHash]) }.singleOrNull()?.userId;
+    override fun createRelationship(fromId: String, toId: String): Boolean = transaction(db) {
 
-        val relationship = if (toId != null) Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.toUserId.eq(toId)).firstOrNull() else null
+        val relationship = Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.toUserId.eq(toId)).firstOrNull()
 
         when  {
             relationship != null -> false
-            toId != null -> {
+            else -> {
                 Relationships.insert {
                     it[fromUserId] = fromId
                     it[toUserId] = toId
@@ -56,16 +54,17 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
                 }
                 true
             }
-            else -> false
         }
 
 
     }
 
-    override fun confirmRelationship(fromUserId: String, toUserId: String) {
-        Relationships.update  ({ Relationships.fromUserId eq fromUserId; Relationships.toUserId eq toUserId }){
+    override fun confirmRelationship(fromUserId: String, toUserId: String) = transaction(db) {
+        Relationships.update  ({ Relationships.fromUserId.eq(fromUserId) and Relationships.toUserId.eq(toUserId) }){
             it[isConfirmed] = true;
         }
+
+        Relationships.select { Relationships.fromUserId.eq(fromUserId) and Relationships.toUserId.eq(toUserId) and Relationships.isConfirmed.eq(true) }.singleOrNull() != null
     }
 
     override fun friendList(userId: String) = transaction(db) {
