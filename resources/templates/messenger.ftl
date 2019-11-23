@@ -61,10 +61,10 @@
                PENDING REQUEST(S)
             </div>
             <div class="panel-body">
-                <ul class="media-list">
-                    <#list 1..0 as x>
-                        <li class="media">
-                            <h5>Alex Deo | User </h5>
+                <ul id="friend-request-waiting-list" class="media-list">
+                    <#list friendRequestWaitingList as friendRequest>
+                        <li>
+                            ${friendRequest.email}
                         </li>
                     </#list>
                 </ul>
@@ -76,7 +76,7 @@
                SENT REQUEST(S)
             </div>
             <div class="panel-body">
-                <ul id="friend-request-list" class="media-list">
+                <ul id="friend-request-sent-list" class="media-list">
                     <#list friendRequestSentList as friendRequest>
                         <li>
                             ${friendRequest.email}

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
-class ChatServer {
+class SocketServer {
 
     private val onLineUsers = ConcurrentHashMap<String, MutableList<WebSocketSession>>()
 
@@ -38,8 +38,15 @@ class ChatServer {
     }
 
     private suspend fun addFriend(fromUserId: String, email : String?, dao: DAOFacade) {
-        if (email != null && fromUserId != dao.userByEmail(email)?.userId && dao.createRelationship(fromUserId, email))
-            onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\"}"));
+        if (email != null){
+            val toUserId = dao.userByEmail(email)?.userId
+            val userEmail = dao.user(fromUserId)?.email
+
+            if (fromUserId != toUserId && dao.createRelationship(fromUserId, email)){
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\"}"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-friend-request\" , \"message\" : \"$userEmail\"}"));
+            }
+        }
         else
             onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"failure\"}"));
     }

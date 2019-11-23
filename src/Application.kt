@@ -81,6 +81,8 @@ fun Application.module(testing: Boolean = false) {
 
     val hashFunction = { s: String -> hash(s) }
 
+    println(dir.canonicalFile.absolutePath)
+
     //register routes
     routing {
         welcome()
@@ -130,7 +132,7 @@ val json = Json(JsonConfiguration.Stable)
 @Serializable
 data class SocketData(val command:String?, val message: String?)
 
-val server = ChatServer()
+val server = SocketServer()
 
 val pool = ComboPooledDataSource().apply {
     driverClass = Driver::class.java.name

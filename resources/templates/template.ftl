@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css" href="/styles/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/messenger.css">
+    <script src="/styles/jquery.min.js"></script>
 
 </head>
 <body>

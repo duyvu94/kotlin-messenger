@@ -18,7 +18,9 @@ fun Route.messenger(dao: DAOFacade) {
         val user = call.sessions.get<ApplicationSession>()?.let { dao.user(it.userId) } ?: return@get call.redirect(Welcome())
 
         val friendRequestSentList = dao.friendRequestSentList(user.userId)
+        val friendRequestWaitingList = dao.friendRequestWaitingList(user.userId)
 
-        call.respond(FreeMarkerContent("messenger.ftl", mapOf("user" to user, "friendRequestSentList" to friendRequestSentList)))
+        call.respond(FreeMarkerContent("messenger.ftl",
+            mapOf("user" to user, "friendRequestSentList" to friendRequestSentList, "friendRequestWaitingList" to friendRequestWaitingList )))
     }
 }

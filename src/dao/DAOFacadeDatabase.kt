@@ -39,11 +39,10 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         val toId = Users.select( Users.email.eq(email))
             .map { User(it[Users.id], email, it[Users.displayName], it[Users.passwordHash]) }.singleOrNull()?.userId;
 
-        println(toId);
+        val relationship = if (toId != null) Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.toUserId.eq(toId)).firstOrNull() else null
 
-        val relationship = if (toId != null) Relationships.select(Relationships.fromUserId.eq(fromId) and Relationships.fromUserId.eq(toId)) else null
         when  {
-            relationship?.fetchSize != null -> false
+            relationship != null -> false
             toId != null -> {
                 Relationships.insert {
                     it[fromUserId] = fromId

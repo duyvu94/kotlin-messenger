@@ -35,46 +35,27 @@ function connect() {
     socket.onmessage = function(event) {
         console.log(event.data);
         let responseData = JSON.parse(event.data)
-
-        let friendRequestList = document.getElementById("friend-request-list");
+        if (responseData.message == "failure")
+            return;
 
         if (responseData != null ){
             switch (responseData.command){
                 case "server-add-friend":
-                    if (responseData == "failure")
-                        break;
-                    let li = document.createElement("li");
-                    li.className = "media";
-                    li.appendChild(document.createTextNode(responseData.message));
-                    friendRequestList.appendChild(li);
+                    $("#friend-request-sent-list").append('<li class="media">'+responseData.message+'</li>')
+                    break;
+
+                case "server-friend-request":
+                    $("#friend-request-waiting-list").append('<li class="media">'+responseData.message+'</li>')
                     break;
             }
-
-
         }
 
     };
 }
 
-/**
- * Handle messages received from the sever.
- *
- * @param message The textual message
- */
-function received(message) {
-    // Out only logic upon message receiving is to output in the messages container to notify the user.
-    write(message);
-}
 
-/**
- * Writes a message in the HTML 'messages' container that the user can see.
- *
- * @param message The message to write in the container
- */
 function write(message) {
-    // We first create an HTML paragraph and sets its class and contents.
-    // Since we are using the textContent property.
-    // No HTML is processed and every html-related character is escaped property. So this should be safe.
+
     var line = document.createElement("p");
     line.className = "message";
     line.textContent = message;

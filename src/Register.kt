@@ -37,11 +37,14 @@ fun Route.register(dao: DAOFacade, hashFunction: (String) -> String) {
 
         val error = Register(userId, displayName, email)
 
+        println(dao.user(userId))
+
         when {
             password.length < 6 -> call.redirect(error.copy(error = "Password should be at least 6 characters long"))
             userId.length < 4 -> call.redirect(error.copy(error = "Login should be at least 4 characters long"))
             !userNameValid(userId) -> call.redirect(error.copy(error = "Login should be consists of digits, letters, dots or underscores"))
             dao.user(userId) != null -> call.redirect(error.copy(error = "User with the following login is already registered"))
+            dao.userByEmail(email) != null -> call.redirect(error.copy(error = "The email $email is already registered"))
             else -> {
                 val hash = hashFunction(password)
                 val newUser = User(userId, email, displayName, hash)
@@ -51,7 +54,6 @@ fun Route.register(dao: DAOFacade, hashFunction: (String) -> String) {
                 } catch (e: Throwable) {
                     when {
                         dao.user(userId) != null -> call.redirect(error.copy(error = "The username has been used"))
-                        dao.userByEmail(email) != null -> call.redirect(error.copy(error = "The email $email is already registered"))
                         else -> {
                             application.log.error("Failed to register user", e)
                             call.redirect(error.copy(error = "Failed to register"))
