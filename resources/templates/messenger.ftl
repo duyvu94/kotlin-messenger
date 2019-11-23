@@ -5,11 +5,12 @@
 <@layout.mainLayout title="Messenger">
     <div class="col-md-8 h-100">
         <div class="panel h-100">
-            <div class="panel-heading">
+            <div class="panel-heading" id="chat-header">
                 RECENT CHAT HISTORY
             </div>
-            <div class="panel-body chat-content" id= "chat-message-list">
-                <ul class="media-list">
+            <div class="panel-body chat-content">
+                <ul class="media-list" id= "chat-message-list">
+                <!--
                     <#list 1..10 as x>
                         <li class="media message my-message">
                             <p>Donec sit amet ligula enim. Duis vel condimentum massa.
@@ -26,13 +27,14 @@
 
                         </li>
                     </#list>
+                -->
                 </ul>
             </div>
             <div class="panel-footer">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Enter Message" />
+                    <input type="text" class="form-control" id="message-text-field" placeholder="Enter Message" disabled/>
                     <span class="input-group-btn">
-                        <button class="btn pure-button-primary" type="button">SEND</button>
+                        <button class="btn pure-button-primary" type="button" id="send-message-btn" disabled>SEND</button>
                     </span>
                 </div>
             </div>
@@ -49,7 +51,7 @@
                 <ul id="friend-list" class="media-list">
                    <#list friendList as friend>
                        <li class="media">
-                           <a id="chat-friend-btn" data-id="${friend.email}">${friend.email}</a>
+                           <a class="chat-friend-btn" href="#" data-id="${friend.userId}">${friend.email}</a>
                        </li>
                    </#list>
                 </ul>
@@ -63,7 +65,7 @@
             <div class="panel-body">
                 <ul id="friend-request-waiting-list" class="media-list">
                     <#list friendRequestWaitingList as friendRequest>
-                        <li class="media">
+                        <li class="media" id="waiting-request-${friendRequest.userId}">
                             <h5>${friendRequest.email}</h5>
                             <button class="btn pure-button-primary accept-friend-btn" data-id="${friendRequest.email}" type="button">Accept</button>
                         </li>
@@ -79,7 +81,7 @@
             <div class="panel-body">
                 <ul id="friend-request-sent-list" class="media-list">
                     <#list friendRequestSentList as friendRequest>
-                        <li class="media">
+                        <li class="media" id="sent-request-${friendRequest.userId}">
                             <h5>${friendRequest.email}</h5>
                         </li>
                     </#list>
@@ -96,4 +98,8 @@
         </div>
 
     </div>
+
+    <#if user??>
+        <script src="/styles/main.js"></script>
+    </#if>
 </@layout.mainLayout>

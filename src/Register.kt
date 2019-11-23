@@ -37,8 +37,6 @@ fun Route.register(dao: DAOFacade, hashFunction: (String) -> String) {
 
         val error = Register(userId, displayName, email)
 
-        println(dao.user(userId))
-
         when {
             password.length < 6 -> call.redirect(error.copy(error = "Password should be at least 6 characters long"))
             userId.length < 4 -> call.redirect(error.copy(error = "Login should be at least 4 characters long"))

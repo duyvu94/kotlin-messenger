@@ -1,15 +1,15 @@
-package com.duyvu
+package com.duyvu.model
 
+import com.duyvu.SocketData
 import com.duyvu.dao.DAOFacade
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.cio.websocket.close
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import java.util.*
+import org.joda.time.DateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicInteger
 
 class SocketServer {
 
@@ -26,15 +26,39 @@ class SocketServer {
         connections?.remove(socket)
     }
 
-    suspend fun sendTo(recipient: String, sender: String, message: String) {
-
-    }
-
     suspend fun command(sender: String, data: SocketData, dao: DAOFacade) {
         println(data.command + " " + data.message);
         when (data.command) {
             "client-add-friend" -> addFriend(sender, data.message, dao)
             "client-accept-friend" -> acceptFriend(sender, data.message, dao)
+            "client-send-message" -> sendMessage(sender, data.message, data.extraMessage, dao)
+            "client-chat-history" -> chatHistory(sender, data.message, dao)
+        }
+    }
+
+    private suspend fun chatHistory(fromUserId: String, toUserId: String?, dao: DAOFacade){
+        if (toUserId != null ){
+            dao.messageList(fromUserId, toUserId).forEach{
+                if (it.fromUserId == fromUserId)
+                    onLineUsers[fromUserId]?.send(
+                        Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"${it.content}\", \"date\" : \"${it.date}\" }"));
+                else
+                    onLineUsers[fromUserId]?.send(
+                        Frame.Text("{\"command\": \"server-receive-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"${it.content}\", \"date\" : \"${it.date}\" }"));
+
+            }
+        }
+    }
+
+    private suspend fun sendMessage(fromUserId: String, toUserId: String?, message: String?, dao: DAOFacade){
+        val date = DateTime.now()
+        if (toUserId != null && message != null){
+            if (dao.sendMessage(fromUserId, toUserId, message, date)){
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"$message\", \"date\" : \"$date\" }"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-receive-message\" , \"message\" : \"$fromUserId\", \"extraMessage\" : \"$message\", \"date\" : \"$date\" }"));
+            }
+            else
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"failure\"}"));
         }
     }
 
@@ -44,8 +68,8 @@ class SocketServer {
             val userEmail = dao.user(fromUserId)?.email
 
             if (toUserId != null && fromUserId != toUserId && dao.createRelationship(fromUserId, toUserId)){
-                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\"}"));
-                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-friend-request\" , \"message\" : \"$userEmail\"}"));
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-add-friend\" , \"message\" : \"$email\", \"extraMessage\" : \"$toUserId\"}"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-friend-request\" , \"message\" : \"$userEmail\", \"extraMessage\" : \"$fromUserId\"}"));
             }
         }
         else
@@ -58,20 +82,12 @@ class SocketServer {
             val userEmail = dao.user(fromUserId)?.email
 
             if (toUserId != null && fromUserId != toUserId && dao.confirmRelationship(fromUserId, toUserId)){
-                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-accept-friend\" , \"message\" : \"$email\"}"));
-                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-accept-request\" , \"message\" : \"$userEmail\"}"));
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-accept-friend\" , \"message\" : \"$email\", \"extraMessage\" : \"$toUserId\"}"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-accept-request\" , \"message\" : \"$userEmail\", \"extraMessage\" : \"$fromUserId\"}"));
             }
         }
         else
             onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-accept-friend\" , \"message\" : \"failure\"}"));
-    }
-
-    private suspend fun broadcast(message: String) {
-
-    }
-
-    private suspend fun broadcast(sender: String, message: String) {
-
     }
 
     private suspend fun List<WebSocketSession>.send(frame: Frame) {

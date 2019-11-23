@@ -1,39 +1,30 @@
 // Global variable to hold the websocket.
 var socket = null;
 
-/**
- * This function is in charge of connecting the client.
- */
 function connect() {
+    $('body').loadingModal({ text: 'Connecting...' });
 
-    console.log("Begin connect");
     socket = new WebSocket("ws://" + window.location.host + "/ws");
 
-
     socket.onerror = function() {
+        $('body').loadingModal({ text: 'Reconnecting...' });
         console.log("socket error");
     };
 
 
     socket.onopen = function() {
-   //     write("Connected");
+        console.log("Connected");
+        $('body').loadingModal('hide');
     };
 
     socket.onclose = function(evt) {
-        var explanation = "";
-        if (evt.reason && evt.reason.length > 0) {
-            explanation = "reason: " + evt.reason;
-        } else {
-            explanation = "without a reason specified" ;
-        }
+        $('body').loadingModal({ text: 'Reconnecting...' });
 
-      //  write("Disconnected with close code " + evt.code + " and " + explanation);
         setTimeout(connect, 5000);
     };
 
     // If we receive a message from the server, we want to handle it.
     socket.onmessage = function(event) {
-        console.log(event.data);
         let responseData = JSON.parse(event.data)
         if (responseData.message == "failure")
             return;
@@ -42,31 +33,54 @@ function connect() {
             switch (responseData.command){
                 case "server-add-friend":
                     $("#friend-request-sent-list")
-                        .append('<li class="media" data-id="sent-request-'+responseData.message+'><h5>'+responseData.message+'</h5>');
+                        .append('<li class="media" id="sent-request-'+responseData.extraMessage+'"><h5>'+responseData.message+'</h5></li>');
                     break;
 
                 case "server-friend-request":
                     $("#friend-request-waiting-list")
-                        .append('<li class="media" data-id="waiting-request-'+responseData.message+'"><h5>'+responseData.message+'</h5>'+
+                        .append('<li class="media" id="waiting-request-'+responseData.extraMessage+'"><h5>'+responseData.message+'</h5>'+
                         '<button class="btn pure-button-primary accept-friend-btn" data-id="'+responseData.message+'" type="button">Accept</button></li>');
                     $('.accept-friend-btn').click(onAcceptFriendRequest);
                     break;
 
                 case "server-accept-request":
                     $("#friend-list")
-                        .append('<li class="media"><a class="chat-friend-btn" data-id="'+responseData.message+'">'+responseData.message+'</a></li>');
-                    $('li.[data-id="sent-request-'+responseData.message+'"]').remove();
+                        .append('<li class="media"><a class="chat-friend-btn" href="#" data-id="'+responseData.extraMessage+'">'+responseData.message+'</a></li>');
+                    $('.chat-friend-btn').click(onStartChat);
+                    $("#sent-request-"+responseData.extraMessage).remove();
                     break;
 
-                case "server-accept-friend":
-                    $("#friend-list")
-                        .append('<li class="media"><a class="chat-friend-btn" data-id="'+responseData.message+'">'+responseData.message+'</a></li>');
-                    $('li.[data-id="waiting-request-'+responseData.message+'"]').remove();
+                case 'server-send-message':
+                    if ($('#chat-message-list').attr('data-id') != responseData.message)
+                        break;
+                    $('#chat-message-list').append('<li class="media message my-message"><p>'+responseData.extraMessage+'</p></li>');
+                    $('#chat-message-list').scrollTop($('#chat-message-list').height());
+                    break;
+
+                case 'server-receive-message':
+                    if ($('#chat-message-list').attr('data-id') != responseData.message)
+                        break;
+                    $('#chat-message-list').append('<li class="media message their-message"><p>'+responseData.extraMessage+'</p></li>');
+                    $('#chat-message-list').scrollTop($('#chat-message-list').height());
                     break;
             }
         }
 
     };
+}
+
+function onStartChat(e){
+    e.preventDefault();
+    let id = $(this).attr('data-id');
+    if (id && socket) {
+        $('#chat-header').html('RECENT CHAT HISTORY ('+ $(this).html() +')');
+        $('#chat-message-list').empty();
+        $('#chat-message-list').attr('data-id', id);
+        $('#send-message-btn').prop('disabled', false);
+        $('#message-text-field').prop('disabled', false);
+        $('#message-text-field').val('');
+        socket.send('{command : "client-chat-history", message : "'+ id +'", extraMessage: "" }');
+    }
 }
 
 function onSendFriendRequest() {
@@ -75,26 +89,34 @@ function onSendFriendRequest() {
     if (input) {
         var email = input.value;
         if (email && socket) {
-            socket.send('{command : "client-add-friend", message : "'+ email +'"}');
+            socket.send('{command : "client-add-friend", message : "'+ email +'", extraMessage: "" }');
             input.value = "";
         }
     }
 }
 
-function onAcceptFriendRequest(event){
-    event.preventDefault();
+function onAcceptFriendRequest(){
     let email= $(this).attr('data-id');
     if (email && socket) {
-        socket.send('{command : "client-accept-friend", message : "'+ email +'"}');
+        socket.send('{command : "client-accept-friend", message : "'+ email +'", extraMessage: "" }');
+    }
+}
+
+function onSendMessage(){
+    let message= $('#message-text-field').val();
+    let receiver = $('#chat-message-list').attr('data-id');
+    if (message && message.length < 1000 && receiver && socket) {
+        socket.send('{command : "client-send-message", message : "'+ receiver +'", extraMessage : "'+ message +'"}');
+        $('#message-text-field').val('');
     }
 }
 
 $(document).ready(function() {
     connect();
 
-    $("#add-friend-btn").click(onSendFriendRequest);
-    $(".accept-friend-btn").click(onAcceptFriendRequest);
+    $('#add-friend-btn').click(onSendFriendRequest);
+    $('.accept-friend-btn').click(onAcceptFriendRequest);
+    $('#send-message-btn').click(onSendMessage);
+    $('.chat-friend-btn').click(onStartChat);
 
-    var chatList = document.getElementById("chat-message-list");
-    chatList.scrollTop = chatList.scrollHeight;
 });

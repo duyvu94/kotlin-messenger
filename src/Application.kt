@@ -3,6 +3,7 @@ package com.duyvu
 
 import com.duyvu.dao.DAOFacade
 import com.duyvu.dao.DAOFacadeDatabase
+import com.duyvu.model.SocketServer
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import io.ktor.application.*
 import io.ktor.response.*
@@ -54,7 +55,7 @@ data class Messenger(val userId: String = "")
 
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
-fun Application.module(testing: Boolean = false) {
+fun Application.module() {
     dao.init()
     environment.monitor.subscribe(ApplicationStopped) { pool.close() }
 
@@ -80,8 +81,6 @@ fun Application.module(testing: Boolean = false) {
     }
 
     val hashFunction = { s: String -> hash(s) }
-
-    println(dir.canonicalFile.absolutePath)
 
     //register routes
     routing {
@@ -130,7 +129,7 @@ val hmacKey = SecretKeySpec(hashKey, "HmacSHA1")
 val json = Json(JsonConfiguration.Stable)
 
 @Serializable
-data class SocketData(val command:String?, val message: String?)
+data class SocketData(val command:String?, val message: String?, val extraMessage: String?)
 
 val server = SocketServer()
 
@@ -154,7 +153,7 @@ data class ApplicationSession(val userId: String)
 internal fun userNameValid(userId: String) = userId.matches("[a-zA-Z0-9_\\.]+".toRegex())
 
 suspend fun ApplicationCall.redirect(location: Any) {
-    val host = request.host() ?: "localhost"
+    val host = request.host()
     val portSpec = request.port().let { if (it == 80) "" else ":$it" }
     val address = host + portSpec
 

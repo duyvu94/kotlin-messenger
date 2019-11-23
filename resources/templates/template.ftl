@@ -12,7 +12,13 @@
     <link rel="stylesheet" type="text/css" href="/styles/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/messenger.css">
+    <link rel="stylesheet" href="/styles/jquery.loadingModal.css">
+
+    <link rel="shortcut icon" type="image/x-icon" href="/styles/favicon.ico"/>
+
     <script src="/styles/jquery.min.js"></script>
+    <script src="/styles/jquery.loadingModal.js"></script>
+
 
 </head>
 <body>
@@ -48,10 +54,6 @@
     <div class="content pure-u-1 pure-u-md-3-4">
         <#nested />
     </div>
-
-    <#if user??>
-        <script src="/styles/main.js"></script>
-    </#if>
 
     <div class="footer">
         Vu Phuong Duy, ${.now?string("yyyy")}
