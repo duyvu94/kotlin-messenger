@@ -45,7 +45,7 @@ dependencies {
     compile "io.ktor:ktor-freemarker:$ktor_version"
     compile "io.ktor:ktor-server-host-common:$ktor_version"
     compile "io.ktor:ktor-locations:$ktor_version"
-    compile "org.jetbrains.exposed:exposed:0.12.1"
+    compile "org.jetbrains.exposed:exposed:0.14.1"
     compile "io.ktor:ktor-websockets:$ktor_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0"

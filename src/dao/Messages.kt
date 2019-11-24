@@ -3,7 +3,7 @@ package com.duyvu.dao
 import org.jetbrains.exposed.sql.*
 
 /**
- * Represents the Relationships table using Exposed as DAO.
+ * Represents the Messages table using Exposed as DAO.
  */
 object Messages : Table() {
     val id = integer("id").autoIncrement().primaryKey()
