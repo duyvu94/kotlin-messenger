@@ -8,7 +8,7 @@
             <div class="panel-heading" id="chat-header">
                 RECENT CHAT HISTORY
             </div>
-            <div class="panel-body chat-content">
+            <div class="panel-body chat-content" id="chat-panel-body">
                 <ul class="media-list" id= "chat-message-list">
                 <!--
                     <#list 1..10 as x>
@@ -32,7 +32,7 @@
             </div>
             <div class="panel-footer">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="message-text-field" placeholder="Enter Message" disabled/>
+                    <input type="text" class="form-control" id="message-text-field" maxlength="900" placeholder="Enter Message" disabled/>
                     <span class="input-group-btn">
                         <button class="btn pure-button-primary" type="button" id="send-message-btn" disabled>SEND</button>
                     </span>
@@ -89,7 +89,7 @@
             </div>
             <div class="panel-footer">
                 <div class="input-group">
-                    <input id="add-friend-email" type="text" class="form-control" placeholder="Enter Email" />
+                    <input id="add-friend-email" type="text" class="form-control" maxlength="100" placeholder="Enter Email" />
                     <span class="input-group-btn">
                         <button class="btn pure-button-primary" id="add-friend-btn" type="button">ADD</button>
                     </span>

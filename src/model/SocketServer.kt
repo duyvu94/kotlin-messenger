@@ -8,26 +8,31 @@ import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.cio.websocket.close
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+
 
 class SocketServer {
 
     private val onLineUsers = ConcurrentHashMap<String, MutableList<WebSocketSession>>()
 
-    suspend fun userOnline(userId: String, socket: WebSocketSession) {
+    private val dtf: DateTimeFormatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
+
+    fun userOnline(userId: String, socket: WebSocketSession) {
         val list = onLineUsers.computeIfAbsent(userId) { CopyOnWriteArrayList<WebSocketSession>() }
         list.add(socket)
     }
 
 
-    suspend fun userOffline(userId: String, socket: WebSocketSession) {
+    fun userOffline(userId: String, socket: WebSocketSession) {
         val connections = onLineUsers[userId]
         connections?.remove(socket)
     }
 
     suspend fun command(sender: String, data: SocketData, dao: DAOFacade) {
-        println(data.command + " " + data.message);
+        //println(data.command + " " + data.message);
         when (data.command) {
             "client-add-friend" -> addFriend(sender, data.message, dao)
             "client-accept-friend" -> acceptFriend(sender, data.message, dao)
@@ -41,7 +46,8 @@ class SocketServer {
             dao.messageList(fromUserId, toUserId).forEach{
                 if (it.fromUserId == fromUserId)
                     onLineUsers[fromUserId]?.send(
-                        Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"${it.content}\", \"date\" : \"${it.date}\" }"));
+                        Frame.Text(
+                            "{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"${it.content}\", \"date\" : \"${it.date}\" }"));
                 else
                     onLineUsers[fromUserId]?.send(
                         Frame.Text("{\"command\": \"server-receive-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"${it.content}\", \"date\" : \"${it.date}\" }"));
@@ -51,11 +57,11 @@ class SocketServer {
     }
 
     private suspend fun sendMessage(fromUserId: String, toUserId: String?, message: String?, dao: DAOFacade){
-        val date = DateTime.now()
+        val date = dtf.print(DateTime.now())
         if (toUserId != null && message != null){
             if (dao.sendMessage(fromUserId, toUserId, message, date)){
-                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"$message\", \"date\" : \"$date\" }"));
-                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-receive-message\" , \"message\" : \"$fromUserId\", \"extraMessage\" : \"$message\", \"date\" : \"$date\" }"));
+                onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"$toUserId\", \"extraMessage\" : \"$message\", \"date\" : \"${date}\" }"));
+                onLineUsers[toUserId]?.send(Frame.Text("{\"command\": \"server-receive-message\" , \"message\" : \"$fromUserId\", \"extraMessage\" : \"$message\", \"date\" : \"${date}\" }"));
             }
             else
                 onLineUsers[fromUserId]?.send(Frame.Text("{\"command\": \"server-send-message\" , \"message\" : \"failure\"}"));

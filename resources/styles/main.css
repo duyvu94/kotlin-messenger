@@ -179,3 +179,11 @@ h5 {
 .page-title{
     text-align: center;
 }
+
+p {
+    word-wrap: break-word;
+}
+
+small {
+    float: right;
+}

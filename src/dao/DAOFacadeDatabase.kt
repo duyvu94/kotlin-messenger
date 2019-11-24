@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import org.joda.time.LocalDateTime
 import java.io.*
 
 interface DAOFacade : Closeable {
@@ -28,7 +27,7 @@ interface DAOFacade : Closeable {
 
     fun confirmRelationship(fromUserId: String, toUserId: String): Boolean
 
-    fun sendMessage(fromUserId: String, toUserId: String, message: String, date: DateTime): Boolean
+    fun sendMessage(fromUserId: String, toUserId: String, message: String, date: String): Boolean
 
     fun messageList(fromUserId: String, toUserId: String): List<Message>
 
@@ -95,7 +94,7 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         Relationships.select { Relationships.fromUserId.eq(userId) and Relationships.isConfirmed.eq(false)}.forEach{
             val friendId = it[Relationships.toUserId]
 
-            Relationships.select { Relationships.fromUserId.eq(friendId) }.mapNotNull { it1 ->
+            Relationships.select { Relationships.fromUserId.eq(friendId) and Relationships.toUserId.eq(userId)}.mapNotNull { it1 ->
                 if ( it1[Relationships.isConfirmed] ){
                     user(friendId, null)?.let { it2 -> list.add(it2) }
                 }
@@ -110,7 +109,7 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         Relationships.select { Relationships.fromUserId.eq(userId) and Relationships.isConfirmed.eq(true)}.forEach{
             val friendId = it[Relationships.toUserId]
 
-            Relationships.select { Relationships.fromUserId.eq(friendId) }.mapNotNull { it1 ->
+            Relationships.select { Relationships.fromUserId.eq(friendId) and Relationships.toUserId.eq(userId)}.mapNotNull { it1 ->
                 if ( !it1[Relationships.isConfirmed] ){
                     user(friendId, null)?.let { it2 -> list.add(it2) }
                 }
@@ -120,12 +119,13 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
     }
 
     override fun init() = transaction(db){
+        /*
+        SchemaUtils.drop(Users)
+        SchemaUtils.drop(Relationships)
+        SchemaUtils.drop(Messages) */
         SchemaUtils.create(Users)
         SchemaUtils.create(Relationships)
         SchemaUtils.create(Messages)
-        Messages.selectAll().forEach{
-            println("$it")
-        }
     }
 
     override fun user(userId: String, hash: String?) = transaction(db) {
@@ -155,7 +155,7 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
         Unit
     }
 
-    override fun sendMessage(fromUserId: String, toUserId: String, message: String, date: DateTime) = transaction(db) {
+    override fun sendMessage(fromUserId: String, toUserId: String, message: String, date: String) = transaction(db) {
         val res1 = Relationships.select { Relationships.fromUserId.eq(fromUserId) and Relationships.toUserId.eq(toUserId) and Relationships.isConfirmed.eq(true) }.singleOrNull()
         val res2 = Relationships.select { Relationships.fromUserId.eq(toUserId) and Relationships.toUserId.eq(fromUserId) and Relationships.isConfirmed.eq(true) }.singleOrNull()
 
@@ -185,7 +185,6 @@ class DAOFacadeDatabase(val db: Database = Database.connect("jdbc:h2:mem:test", 
                 it[Messages.mToUserId],
                 it[Messages.content],
                 it[Messages.datetime])
-            println(it)
             list.add(message)
         }
         list
