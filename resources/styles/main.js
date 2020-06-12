@@ -129,4 +129,13 @@ $(document).ready(function() {
     $('#send-message-btn').click(onSendMessage);
     $('.chat-friend-btn').click(onStartChat);
 
+    $('#message-text-field').keypress(function(e) {
+        var key = e.which;
+         if(key == 13)  // the enter key code
+          {
+            $('#send-message-btn').click();
+            return false;
+          }
+    })
+
 });
